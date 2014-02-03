@@ -12,7 +12,7 @@ require 'mina/git'
 # Pull data from production
 # - mina production data:pull
 
-set :repository, 'git@codebasehq.com:test/test/test.git'
+set :repository, 'git@github.com:d4be4st/assets-rails-demo.git'
 set :user, 'www-data'
 
 task :production do
