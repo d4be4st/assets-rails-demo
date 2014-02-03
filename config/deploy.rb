@@ -1,74 +1,111 @@
 require 'mina/bundler'
 require 'mina/rails'
 require 'mina/git'
-# require 'mina/rbenv'  # for rbenv support. (http://rbenv.org)
-# require 'mina/rvm'    # for rvm support. (http://rvm.io)
+#require 'mina/whenever' # uncomment if using whenever
 
-# Basic settings:
-#   domain       - The hostname to SSH to.
-#   deploy_to    - Path to deploy into.
-#   repository   - Git repo to clone from. (needed by mina/git)
-#   branch       - Branch name to deploy. (needed by mina/git)
+# Setup project
+# - mina production setup
+# Deploy project
+# - mina production deploy
+# Tail log from project
+# - mina prodution log
+# Pull data from production
+# - mina production data:pull
 
-set :domain, 'foobar.com'
-set :deploy_to, '/var/www/foobar.com'
-set :repository, 'git://...'
-set :branch, 'master'
+set :repository, 'git@codebasehq.com:test/test/test.git'
+set :user, 'www-data'
 
-# Manually create these paths in shared/ (eg: shared/config/database.yml) in your server.
-# They will be linked in the 'deploy:link_shared_paths' step.
-set :shared_paths, ['config/database.yml', 'log']
-
-# Optional settings:
-#   set :user, 'foobar'    # Username in the server to SSH to.
-#   set :port, '30000'     # SSH port number.
-
-# This task is the environment that is loaded for most commands, such as
-# `mina deploy` or `mina rake`.
-task :environment do
-  # If you're using rbenv, use this to load the rbenv environment.
-  # Be sure to commit your .rbenv-version to your repository.
-  # invoke :'rbenv:load'
-
-  # For those using RVM, use this to load an RVM version@gemset.
-  # invoke :'rvm:use[ruby-1.9.3-p125@default]'
+task :production do
+  set :domain, 'assets.hadjic.com'
+  set :deploy_to, '/var/www/a/assets.hadjic.com'
+  set :rails_env, 'production'
+  set :branch, 'master'
 end
 
-# Put any custom mkdir's in here for when `mina setup` is ran.
-# For Rails apps, we'll make some of the shared paths that are shared between
-# all releases.
-task :setup => :environment do
-  queue! %[mkdir -p "#{deploy_to}/shared/log"]
-  queue! %[chmod g+rx,u+rwx "#{deploy_to}/shared/log"]
 
-  queue! %[mkdir -p "#{deploy_to}/shared/config"]
-  queue! %[chmod g+rx,u+rwx "#{deploy_to}/shared/config"]
+##################################################################################
+########################## DO NOT EDIT THE CODE BELOW ############################
+##################################################################################
 
-  queue! %[touch "#{deploy_to}/shared/config/database.yml"]
-  queue  %[echo "-----> Be sure to edit 'shared/config/database.yml'."]
-end
+set :shared_paths, ['log']
 
-desc "Deploys the current version to the server."
-task :deploy => :environment do
+task :deploy => :stages do
   deploy do
-    # Put things that will set up an empty directory into a fully set-up
-    # instance of your project.
     invoke :'git:clone'
     invoke :'deploy:link_shared_paths'
     invoke :'bundle:install'
     invoke :'rails:db_migrate'
     invoke :'rails:assets_precompile'
+    invoke :'deploy:cleanup'
+    #invoke :'whenever:update' # uncomment if using whenever
 
     to :launch do
-      queue "touch #{deploy_to}/tmp/restart.txt"
+      # Capistrano to Mina Fix, symlink system to shared
+      queue! %[echo "-----> Symlink system to shared"]
+      queue! %[ln -nFs #{deploy_to}/shared/system #{deploy_to}/#{current_path}/public/system]
+
+      invoke :restart_application
+      invoke :ping_application
     end
   end
 end
 
-# For help in making your deploy script, see the Mina documentation:
-#
-#  - http://nadarei.co/mina
-#  - http://nadarei.co/mina/tasks
-#  - http://nadarei.co/mina/settings
-#  - http://nadarei.co/mina/helpers
+# First ensure that the stage is selected
+task :stages do
+  unless domain
+    print_error "A server needs to be specified. e.g. production/staging"
+    exit
+  end
+end
 
+# Just overwrote to execute stages first
+task :setup => :stages do
+  queue! %[mkdir -p "#{deploy_to}/shared/log"]
+  queue! %[chmod g+rx,u+rwx "#{deploy_to}/shared/log"]
+end
+
+# Tail log from server
+task :log => :stages do
+  queue "tail -f #{deploy_to}/#{current_path}/log/#{rails_env}.log"
+end
+
+# Restart application after deployment
+task :restart_application do
+  queue %[echo "-----> Restarting application"]
+  queue "mkdir -p #{deploy_to}/#{current_path}/tmp"
+  queue "touch #{deploy_to}/#{current_path}/tmp/restart.txt"
+end
+
+# Ping application
+task :ping_application do
+  queue %[echo "-----> Ping domain"]
+  queue %[curl -s #{domain} > /dev/null]
+end
+
+# Sync database
+RYAML = <<-BASH
+  function ryaml {
+    ruby -ryaml -e 'puts ARGV[1..-1].inject(YAML.load(File.read(ARGV[0]))) {|acc, key| acc[key] }' "$@"
+  };
+BASH
+
+namespace :data do
+  task :pull => :stages do
+    isolate do
+      queue RYAML
+      queue "HOST=$(ryaml #{deploy_to}/#{current_path}/config/database.yml #{rails_env} host)"
+      queue "DATABASE=$(ryaml #{deploy_to}/#{current_path}/config/database.yml #{rails_env} database)"
+      queue "USERNAME=$(ryaml #{deploy_to}/#{current_path}/config/database.yml #{rails_env} username)"
+      queue "PASSWORD=$(ryaml #{deploy_to}/#{current_path}/config/database.yml #{rails_env} password)"
+      queue "mysqldump $DATABASE --host=$HOST --user=$USERNAME --password=$PASSWORD > #{deploy_to}/dump.sql"
+      queue "gzip -f #{deploy_to}/dump.sql"
+
+      mina_cleanup!
+    end
+
+    %x[scp #{user}@#{domain}:#{deploy_to}/dump.sql.gz .]
+    %x[gunzip -f dump.sql.gz]
+    %x[#{RYAML} mysql --verbose --user=$(ryaml config/database.yml development username) --password=$(ryaml config/database.yml development password) $(ryaml config/database.yml development database) < dump.sql]
+    %x[rm dump.sql]
+  end
+end
