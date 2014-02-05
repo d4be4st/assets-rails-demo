@@ -2,7 +2,59 @@
   .slides
     %section
       %h2 Asset Pipeline
-      %p This example contains the bare minimum includes and markup required to run a reveal.js presentation.
+      %p "The asset pipeline provides a framework to concatenate and minify or compress JavaScript and CSS assets. It also adds the ability to write these assets in other languages such as CoffeeScript, Sass and ERB."
+    %section
+      %h2 CSS i JavaScript
+      %ul
+        %li concatenate
+        %li minify
+        %li ugliyfy
+        %li fingerprinting (cache-busting)
+    %section
+      %section
+        %h2 rake assets:precompile
+        %pre
+          = preserve do
+            assets-demo/app/assets
+            |-- fonts
+            |   |-- FreckleFace-Regular.ttf
+            |-- images
+            |   |-- infinum.png
+            |-- javascripts
+            |   |-- application.js
+            |   |-- reveal.js
+            |-- stylesheets
+            |   |-- application.css.scss
+            |   |-- fonts.css.scss
+            |   |-- reveal.css
+            |   |-- theme
+            |   |   |-- default.css
+      %section
+        %h2 rake assets:percompile
+        %pre
+          = preserve do
+            assets-demo/current
+            |-- public
+            │   |-- assets
+            │   │   |-- application-0f3df673212e8d01648a55eae7461b85.js
+            │   │   |-- application-0f3df673212e8d01648a55eae7461b85.js.gz
+            │   │   |-- application-75fc8c830fc8ecc8a027bcbf03e4dfaf.js
+            │   │   |-- application-75fc8c830fc8ecc8a027bcbf03e4dfaf.js.gz
+            │   │   |-- application-9ee4a9fc0a4ae407486f06ce676b6772.css
+            │   │   |-- application-9ee4a9fc0a4ae407486f06ce676b6772.css.gz
+            │   │   |-- application-b1509bc95da4cfd04f3e758c83dd0bfd.css
+            │   │   |-- application-b1509bc95da4cfd04f3e758c83dd0bfd.css.gz
+            │   │   |-- FreckleFace-Regular-912f5f5ed8ef7a578708f0c32dc80dff.ttf
+            │   │   |-- FreckleFace-Regular-fd3e7971b5f31dc637aa93809034b5e9.ttf
+            │   │   |-- infinum-3251d61dec5bfbf945928c080127e58e.png
+            │   │   |-- infinum-693161f2d9b7800d2966634575590164.png
+            │   │   |-- manifest-a35f7e4309e938fe9cade6b0888f3c81.json
+      %section
+        %h2 Što sve assets:precompile pokriva?
+        %p.fragment sve u app/assets sto nije *.js i *.css osim application.js i application.css
+        %p.fragment za sve ostalo treba dodat assets_precompile_path
+        %p.fragment config.assets_precompile_path += ['lib/assets/*']
+
     %section
       %h2 Fonts
       .app-assets
