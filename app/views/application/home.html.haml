@@ -11,6 +11,23 @@
         %li ugliyfy
         %li fingerprinting (cache-busting)
     %section
+      %h2 How to concatenate?
+      %p application.css.scss
+      %pre
+        %code
+          = preserve do
+            *= require reveal
+            *= require theme/default
+            *= require fonts
+            *= require_self
+      %p application.js
+      %pre
+        %code
+          = preserve do
+            \//= require jquery
+            \//= require jquery_ujs
+            \//= require reveal
+    %section
       %section
         %h2 rake assets:precompile
         %pre
@@ -18,6 +35,8 @@
             assets-demo/app/assets
             |-- fonts
             |   |-- FreckleFace-Regular.ttf
+            |   |-- novi
+            |   |   |--TheGirlNextDoor.ttf
             |-- images
             |   |-- infinum.png
             |-- javascripts
@@ -35,34 +54,55 @@
           = preserve do
             assets-demo/current
             |-- public
-            │   |-- assets
-            │   │   |-- application-0f3df673212e8d01648a55eae7461b85.js
-            │   │   |-- application-0f3df673212e8d01648a55eae7461b85.js.gz
-            │   │   |-- application-75fc8c830fc8ecc8a027bcbf03e4dfaf.js
-            │   │   |-- application-75fc8c830fc8ecc8a027bcbf03e4dfaf.js.gz
-            │   │   |-- application-9ee4a9fc0a4ae407486f06ce676b6772.css
-            │   │   |-- application-9ee4a9fc0a4ae407486f06ce676b6772.css.gz
-            │   │   |-- application-b1509bc95da4cfd04f3e758c83dd0bfd.css
-            │   │   |-- application-b1509bc95da4cfd04f3e758c83dd0bfd.css.gz
-            │   │   |-- FreckleFace-Regular-912f5f5ed8ef7a578708f0c32dc80dff.ttf
-            │   │   |-- FreckleFace-Regular-fd3e7971b5f31dc637aa93809034b5e9.ttf
-            │   │   |-- infinum-3251d61dec5bfbf945928c080127e58e.png
-            │   │   |-- infinum-693161f2d9b7800d2966634575590164.png
-            │   │   |-- manifest-a35f7e4309e938fe9cade6b0888f3c81.json
+            |   |-- assets
+            |   |   |-- novi
+            |   |   |   |-- TheGirlNextDoor-93a42f2c96124247aa2df334e4ef353a.ttf
+            |   |   |-- application-0f3df673212e8d01648a55eae7461b85.js
+            |   |   |-- application-0f3df673212e8d01648a55eae7461b85.js.gz
+            |   |   |-- application-75fc8c830fc8ecc8a027bcbf03e4dfaf.js
+            |   |   |-- application-75fc8c830fc8ecc8a027bcbf03e4dfaf.js.gz
+            |   |   |-- application-9ee4a9fc0a4ae407486f06ce676b6772.css
+            |   |   |-- application-9ee4a9fc0a4ae407486f06ce676b6772.css.gz
+            |   |   |-- application-b1509bc95da4cfd04f3e758c83dd0bfd.css
+            |   |   |-- application-b1509bc95da4cfd04f3e758c83dd0bfd.css.gz
+            |   |   |-- FreckleFace-Regular-912f5f5ed8ef7a578708f0c32dc80dff.ttf
+            |   |   |-- FreckleFace-Regular-fd3e7971b5f31dc637aa93809034b5e9.ttf
+            |   |   |-- infinum-3251d61dec5bfbf945928c080127e58e.png
+            |   |   |-- infinum-693161f2d9b7800d2966634575590164.png
+            |   |   |-- manifest-a35f7e4309e938fe9cade6b0888f3c81.json
       %section
-        %h2 Što sve assets:precompile pokriva?
-        %p.fragment sve u app/assets sto nije *.js i *.css osim application.js i application.css
-        %p.fragment za sve ostalo treba dodat assets_precompile_path
-        %p.fragment config.assets_precompile_path += ['lib/assets/*']
+        %h3 What does assets:precompile cover by default?
+        %pre
+          %code
+            = preserve do
+              [ Proc.new { |path, fn| fn =~ /app\/assets/ &&
+              !%w(.js .css).include?(File.extname(path)) },
+              \/application.(css|js)$/ ]
+        .fragment
+          %p For everyting else:
+          %pre
+            %code
+              =preserve do
+                config.assets.paths << Rails.root.join(path)
+                config.assets.precompile += %w( custom.css )
 
     %section
-      %h2 Fonts
-      .app-assets
-        Ovo je font iz app/assets/fonts
-      .lib-assets
-        Ovo je font iz lib/assets/fonts
-      .vendor-assets
-        Ovo je font iz vendor/assets/fonts
-    %section
-      %h2 Images
-      = image_tag 'infinum.png'
+      %h2 How to get to assets ?
+      %p In html
+      %pre
+        %code
+          =preserve do
+            \= stylesheet_link_tag    "application"
+            \= javascript_include_tag "application"
+            \= image_tag 'infinum.png'
+      %p In CSS (custom.css.scss)
+      %pre
+        %code
+          =preserve do
+            background: asset-url('infinum.png'); #=> url('/assets/infinum-32...58e.png')
+            background: url(asset-path('infinum.png')); #=> '/assets/infinum-32...58e.png'
+      %p In JS (custom.js.erb)
+      %pre
+        %code
+          =preserve do
+            $('#logo').attr({ src: "<%= asset_path('logo.png') %>" });
