@@ -11,6 +11,18 @@
         %li ugliyfy
         %li fingerprinting (cache-busting)
     %section
+      %h2 Where to put assets ?
+      %ul
+        %li
+          %b app/assets
+          \=>  for assets that are owned by the application, such as custom images, JavaScript files or stylesheets
+        %li
+          %b lib/assets
+          \=> for your own libraries' code that doesn't really fit into the scope of the application or those libraries which are shared across applications
+        %li
+          %b vendor/assets
+          \=> for assets that are owned by outside entities, such as code for JavaScript plugins and CSS frameworks
+    %section
       %h2 How to concatenate?
       %p application.css
       %pre
@@ -55,19 +67,15 @@
             assets-demo/current
             |-- public
             |   |-- assets
+            |   |   |-- application-0f3df673212e8d01648a55eae7461b85.js
+            |   |   |-- application-0f3df673212e8d01648a55eae7461b85.js.gz
+            |   |   |-- application-720db2cc6b732eff5756c97ce90dfe02.css
+            |   |   |-- application-720db2cc6b732eff5756c97ce90dfe02.css.gz
+            |   |   |-- FreckleFace-Regular-912f5f5ed8ef7a578708f0c32dc80dff.ttf
+            |   |   |-- infinum-3251d61dec5bfbf945928c080127e58e.png
+            |   |   |-- manifest-2edc7208b999212efa1ff2333938feaa.json
             |   |   |-- novi
             |   |   |   |-- TheGirlNextDoor-93a42f2c96124247aa2df334e4ef353a.ttf
-            |   |   |-- application-0f3df673212e8d01648a55eae7461b85.js
-            |   |   |-- application-0f3df673212e8d01648a55eae7461b85.js.gz
-            |   |   |-- application-75fc8c830fc8ecc8a027bcbf03e4dfaf.js
-            |   |   |-- application-75fc8c830fc8ecc8a027bcbf03e4dfaf.js.gz
-            |   |   |-- application-9ee4a9fc0a4ae407486f06ce676b6772.css
-            |   |   |-- application-9ee4a9fc0a4ae407486f06ce676b6772.css.gz
-            |   |   |-- application-b1509bc95da4cfd04f3e758c83dd0bfd.css
-            |   |   |-- application-b1509bc95da4cfd04f3e758c83dd0bfd.css.gz
-            |   |   |-- FreckleFace-Regular-912f5f5ed8ef7a578708f0c32dc80dff.ttf
-            |   |   |-- infinum-3251d61dec5bfbf945928c080127e58e.png
-            |   |   |-- manifest-a35f7e4309e938fe9cade6b0888f3c81.json
       %section
         %h3 What does assets:precompile cover by default?
         %pre
