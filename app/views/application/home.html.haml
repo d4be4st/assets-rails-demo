@@ -29,9 +29,10 @@
         %code
           = preserve do
             *= require reveal
-            *= require theme/default
             *= require fonts
             *= require_self
+
+            @import theme/default
       %p application.js
       %pre
         %code
